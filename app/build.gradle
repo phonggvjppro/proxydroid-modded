@@ -9,7 +9,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 29
         versionCode 72
-        versionName "3.2.0"
+        versionName "1.0.0"
         multiDexEnabled true
         ndk {
             // Specifies the ABI configurations of your native
