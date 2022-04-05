@@ -2,7 +2,7 @@
 ## Description
 
 - This is a modified version of proxydroid that supports tweaking configuration via command line.
-- Here is the link to the original version of proxydroid: 
+- Here is the link to the original version of proxydroid: [ProxyDroid](https://github.com/madeye/proxydroid)
 
 ## Usage
 > Note: Root access is required
@@ -56,6 +56,7 @@
     adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --ez isPAC true|false
     ``` 
   - Change bound or never bound ssid list
+    - You must restart app to see change.
     - If the number of ssids is more than 1, they must be separated by commas
     - Alternatively, you can use the following defaults: "WIFI", "WIFI/2G/3G" or "2G/3G"
     - Set bound ssid list
