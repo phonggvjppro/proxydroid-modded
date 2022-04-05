@@ -313,8 +313,8 @@ public class ProxyDroidWidgetProvider extends AppWidgetProvider {
 					Boolean isbypass = intent.getBooleanExtra("isBypassApps", false);
 					editor.putBoolean("isBypassApps", isbypass);
 				}
-				if(intent.hasExtra("isAutoSetProxy")) {
-					Boolean isautoset = intent.getBooleanExtra("isAutoSetProxy", false);
+				if(intent.hasExtra("isGlobalProxy")) {
+					Boolean isautoset = intent.getBooleanExtra("isGlobalProxy", false);
 					editor.putBoolean("isAutoSetProxy", isautoset);
 				}
 				if(intent.hasExtra("certificate")) {
