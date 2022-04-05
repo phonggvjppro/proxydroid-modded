@@ -133,7 +133,10 @@ public class ProxyDroidWidgetProvider extends AppWidgetProvider {
 
 			Log.d(TAG, "Proxy switch action");
 			// do some really cool stuff here
-			if (Utils.isWorking()) {
+			Boolean hasExtra = intent.hasExtra("switch");
+			Integer action = intent.getIntExtra("switch", 0);
+			if(action!=0 && action !=1) action = 1;
+			if ((hasExtra && action ==0) || (!hasExtra && Utils.isWorking())) {
 				// Service is working, so stop it
 				try {
 					context.stopService(new Intent(context,
