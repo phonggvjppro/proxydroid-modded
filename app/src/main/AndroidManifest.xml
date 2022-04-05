@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.proxydroid">
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.ACCESS_SUPERUSER" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <application
+        android:name="org.proxydroid.ProxyDroidApplication"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name">
+
+
+        <activity
+            android:name="org.proxydroid.ProxyDroid"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="org.proxydroid.AppManager"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.AppCompat.Light" />
+        <activity
+            android:name="org.proxydroid.BypassListActivity"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.AppCompat.Light" />
+        <activity
+            android:name="org.proxydroid.FileChooser"
+            android:label="@string/app_name" />
+
+        <service
+            android:name="org.proxydroid.ProxyDroidService"
+            android:enabled="true" />
+
+        <receiver android:name="org.proxydroid.ConnectivityBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="org.proxydroid.ProxyDroidWidgetProvider">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="org.proxydroid.ProxyDroidWidgetProvider.PROXY_SWITCH_ACTION" />
+                <action android:name="org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION"/>
+            </intent-filter>
+
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/proxydroid_appwidget_provider" />
+        </receiver>
+    </application>
+
+</manifest>
