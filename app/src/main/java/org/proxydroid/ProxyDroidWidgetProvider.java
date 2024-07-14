@@ -218,21 +218,21 @@ public class ProxyDroidWidgetProvider extends AppWidgetProvider {
 				}
 				if(intent.hasExtra("port")) {
 					Integer port = intent.getIntExtra("port", -1);
-					if(port>=0) editor.putInt("port", port);
+					if(port>=0) editor.putString("port", port.toString());
 				}
 				if(intent.hasExtra("username")) {
 					String username = intent.getStringExtra("username");
 					if(username!=null) editor.putString("user", username);
 				}
 				if(intent.hasExtra("password")) {
-					String pass = intent.getStringExtra("pass");
+					String pass = intent.getStringExtra("password");
 					if(pass!=null) editor.putString("password", pass);
 				}
 				if(intent.hasExtra("proxytype")) {
 					String proxytype = intent.getStringExtra("proxytype");
-					if(proxytype!=null && (proxytype.equals("HTTP") || proxytype.equals("HTTPS") ||
-							proxytype.equals("HTTP-Tunnel") || proxytype.equals("SOCKS4") || proxytype.equals("SOCKS5")))
-						editor.putString("proxyType", proxytype);
+					if(proxytype!=null && (proxytype.equalsIgnoreCase("HTTP") || proxytype.equalsIgnoreCase("HTTPS") ||
+							proxytype.equalsIgnoreCase("HTTP-Tunnel") || proxytype.equalsIgnoreCase("SOCKS4") || proxytype.equalsIgnoreCase("SOCKS5")))
+						editor.putString("proxyType", proxytype.toLowerCase());
 				}
 				if(intent.hasExtra("setbypassAddress")) {
 					String bypassaddrs = intent.getStringExtra("setbypassAddress");
