@@ -2,134 +2,58 @@
 ## Description
 
 - This is a modified version of proxydroid that supports tweaking configuration via command line.
+- Now support from Android 5.0 to Android 14.
 - Here is the link to the original version of proxydroid: [ProxyDroid](https://github.com/madeye/proxydroid)
 
 ## Usage
 > Note: Root access is required
 
 - Install ProxyDroid Plus apk
+- Start the app for the first time to create the default configuration and make broadcast receiver work.
 - Sending Broadcast intent via Adb or your Android Services/Apps.
-- Example:
 
-  - Turn on/off proxydroid service
-     ```
-     adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.PROXY_SWITCH_ACTION --ei switch 0 
-     ## use 0 to turn off and 1 to turn on
-     ```
-  - Change profile 
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es setprofile "you_profile_name"
-    ## If your profile doesn't exist, it will automatically create a new profile with such name.
-    ```
-  - Change host
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es host "host_string"
-    ```
-  - Change port
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --ei port port_value
-    ## port value must be an integer
-    ```
-  - Change proxyType
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es proxytype "proxy_type_value"
-    ## proxy_type_value must be one of the following values: HTTP, HTTPS, SOCKS4, SOCKS5, HTTP-Tunnel
-    ```
-  - Change authenticate mode
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --ez isAuth true|false
-    ```
-  - Change username
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es username "abcxyz"
-    ```
-  - Change password
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es password "abcxyz"
-    ```
-  - Change autoconnect mode
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --ez isAutoSetProxy true|false
-    ``` 
-  - Change PAC mode
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --ez isPAC true|false
-    ``` 
-  - Change bound or never bound ssid list
-    - You must restart app to see change.
-    - If the number of ssids is more than 1, they must be separated by commas
-    - Alternatively, you can use the following defaults: "WIFI", "WIFI/2G/3G" or "2G/3G"
-    - Set bound ssid list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es setssid "WIFI, wifi_chua, 2G/3G"
-      ```
-    - Set never bound ssid list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es setexcludedssid "WIFI, wifi_chua, 2G/3G"
-      ```
-    - Add bound ssid list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es addssid "trachanhsuoi"
-      ```
-    - Add never bound ssid list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es addexcludedssid "trachanhsuoi"
-      ```
-    - Remove bound ssid list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es delssid "trachanhsuoi, 2G/3G"
-      ```
-    - Remove never bound ssid list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es delexcludedssid "trachanhsuoi, 2G/3G"
-      ```
-    
-  - Change bypass address list
-    - Set bypass address list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es setssid "WIFI, wifi_chua, 2G/3G"
-      ```
-    - Add bypass address list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es setexcludedssid "WIFI, wifi_chua, 2G/3G"
-      ```
-    - Remove bypass address list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es addssid "trachanhsuoi"
-      ```
-  - Change NTLM mode
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --ez isNTLM true|false
-    ```
-  - Change domain
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es domain "abcxyz.org"
-    ```
-  - Change certificate
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es certificate "abcxyzghik......"
-    ```
-  - Change global proxy mode
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --ez isGlobalProxy true|false
-    ```
-  - Change bypass app mode
-    ```
-    adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --ez isBypassApps true|false
-    ```
-  - Change bypass app list
-    - you must use package name instead of app name
-    - Set Bypass or proxyed app list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es setproxyedapp "com.facebook.katana, org.proxydroid"
-      ```
-    - Add bypass or proxyed app list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es addproxyedapp "com.facebook.katana, org.proxydroid"
-      ```
-    - Remove bypass or proxyed app list
-      ```
-      adb shell am broadcast -a org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION --es delproxyedapp "com.facebook.katana, org.proxydroid"
-      ```
-      
-    
+## Command
+### Profile Management
+
+- Create a new profile and switch to it:
+  ```
+  adb shell am broadcast -a org.proxydroid.PROFILE_CHANGE --es action add
+  ```
+- Switch to the existing profile:
+  ```
+  adb shell am broadcast -a org.proxydroid.PROFILE_CHANGE --es action switch --ei profileId <profileId>
+  ```
+- Delete current profile:
+  ```
+  adb shell am broadcast -a org.proxydroid.PROFILE_CHANGE --es action delete 
+  ```
+- List all profiles:
+  ```
+  adb shell am broadcast -a org.proxydroid.PROFILE_CHANGE --es action list
+  ```
+- Rename current profile:
+  ```
+  adb shell am broadcast -a org.proxydroid.PROFILE_CHANGE --es action rename --es newName <newName>
+  ```
+### Proxy Configuration
+- Set a property:
+  ```
+  adb shell am broadcast -a org.proxydroid.PROXY_CONFIGURE <property> <value>
+  ```
+
+- List all properties:
+
+  | Name           | Type           | Description                                                                     |
+  |----------------|----------------|---------------------------------------------------------------------------------|
+  | proxyType      | string         | one of: http, https, http-tunnel, socks4, socks5                                |
+  | host           | string         | Proxy host address                                                              |
+  | port           | int            | Proxy port number                                                               |
+  | isPAC          | bool           | Use PAC file. If true, the host prop will be used as PAC url                    |
+  | isGlobalProxy  | bool           | Set global proxy                                                                |
+  | isAuth         | bool           | Use authentication for proxy                                                    |
+  | user           | string         | Proxy username                                                                  |
+  | password       | string         | Proxy password                                                                  |
+  | bypassAddrs    | string         | List of hosts to bypass the proxy                                               |
+  | isNTLM         | bool           | Use NTLM authentication for proxy                                               |
+  | proxyedApps    | string         | List of apps to use proxy, separated by pipe. If empty, all apps will use proxy |
+  | isBypassApps   | bool           | If true, the proxy will be bypassed for the apps in proxyedApps                 |
