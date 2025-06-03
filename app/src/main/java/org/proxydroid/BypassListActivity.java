@@ -43,8 +43,10 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -95,7 +97,7 @@ public class BypassListActivity extends AppCompatActivity implements
 	private ArrayList<String> bypassList;
 	private Profile profile = new Profile();
 
-	final Handler handler = new Handler() {
+	final Handler handler = new Handler(Looper.getMainLooper()) {
 		@Override
 		public void handleMessage(Message msg) {
 			String addr;
@@ -138,35 +140,27 @@ public class BypassListActivity extends AppCompatActivity implements
 
 	@Override
 	public void onClick(View arg0) {
-		switch (arg0.getId()) {
-		case R.id.addBypassAddr:
+		int id = arg0.getId();
+		if(id == R.id.addBypassAddr) {
 			editAddr(MSG_ADD_ADDR, -1);
-			break;
-		case R.id.presetBypassAddr:
+		} else if(id == R.id.presetBypassAddr) {
 			presetAddr();
-			break;
-		case R.id.importBypassAddr:
+		} else if(id == R.id.importBypassAddr) {
 			importAddr();
-			break;
-		case R.id.exportBypassAddr:
+		} else if(id == R.id.exportBypassAddr) {
 			exportAddr();
-			break;
 		}
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case android.R.id.home:
-			// app icon in action bar clicked; go home
-//			Intent intent = new Intent(this, ProxyDroid.class);
-//			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-//			startActivity(intent);
+		if(item.getItemId() == android.R.id.home) {
 			finish();
 			return true;
-		default:
+		} else {
 			return super.onOptionsItemSelected(item);
 		}
+
 	}
 
 	@Override
@@ -236,6 +230,7 @@ public class BypassListActivity extends AppCompatActivity implements
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
 		if (requestCode == Constraints.IMPORT_REQUEST) {
 			if (resultCode == RESULT_OK) {
 				if (data == null)
@@ -247,7 +242,7 @@ public class BypassListActivity extends AppCompatActivity implements
 				final ProgressDialog pd = ProgressDialog.show(this, "",
 						getString(R.string.importing), true, true);
 
-				final Handler h = new Handler() {
+				final Handler h = new Handler(Looper.getMainLooper()) {
 					@Override
 					public void handleMessage(Message msg) {
 						refreshList();
@@ -289,8 +284,10 @@ public class BypassListActivity extends AppCompatActivity implements
 	}
 
 	private void importAddr() {
-		startActivityForResult(new Intent(this, FileChooser.class),
-				Constraints.IMPORT_REQUEST);
+		if(Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+			startActivityForResult(new Intent(this, FileChooser.class),
+					Constraints.IMPORT_REQUEST);
+		}
 	}
 
 	private void exportAddr() {

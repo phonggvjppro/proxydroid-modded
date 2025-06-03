@@ -47,15 +47,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.Toast;
@@ -290,22 +290,6 @@ public class ProxyDroidService extends Service {
         return true;
     }
 
-    private void initSoundVibrateLights(NotificationCompat.Builder builder) {
-        final String ringtone = settings.getString("settings_key_notif_ringtone", null);
-        AudioManager audioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-        if (audioManager.getStreamVolume(AudioManager.STREAM_RING) == 0) {
-            builder.setSound(null);
-        } else if (ringtone != null) {
-            builder.setSound(Uri.parse(ringtone));
-        }
-
-        if (settings.getBoolean("settings_key_notif_vibrate", false)) {
-            builder.setVibrate(new long[]{0, 1000, 500, 1000, 500, 1000});
-        }
-
-//    notification.defaults |= Notification.DEFAULT_LIGHTS;
-    }
-
     private void createNotificationChannel() {
         // Create the NotificationChannel, but only on API 26+ because
         // the NotificationChannel class is new and not in the support library
@@ -323,8 +307,6 @@ public class ProxyDroidService extends Service {
 
     private void notifyAlert(String title, String info) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "Service");
-
-        initSoundVibrateLights(builder);
 
         builder.setAutoCancel(false);
         builder.setTicker(title);
@@ -376,19 +358,8 @@ public class ProxyDroidService extends Service {
         // Make sure the connection is closed, important here
         onDisconnect();
 
-        // for widget, maybe exception here
-        try {
-            RemoteViews views = new RemoteViews(getPackageName(), R.layout.proxydroid_appwidget);
-            views.setImageViewResource(R.id.serviceToggle, R.drawable.off);
-            AppWidgetManager awm = AppWidgetManager.getInstance(this);
-            awm.updateAppWidget(
-                    awm.getAppWidgetIds(new ComponentName(this, ProxyDroidWidgetProvider.class)),
-                    views);
-        } catch (Exception ignore) {
-            // Nothing
-        }
 
-        Editor ed = settings.edit();
+        SharedPreferences.Editor ed = settings.edit();
         ed.putBoolean("isRunning", false);
         ed.commit();
 
@@ -431,10 +402,10 @@ public class ProxyDroidService extends Service {
 
     }
 
-    final Handler handler = new Handler() {
+    final Handler handler = new Handler(Looper.getMainLooper()) {
         @Override
         public void handleMessage(Message msg) {
-            Editor ed = settings.edit();
+            SharedPreferences.Editor ed = settings.edit();
             switch (msg.what) {
                 case MSG_CONNECT_START:
                     ed.putBoolean("isConnecting", true);
@@ -543,12 +514,10 @@ public class ProxyDroidService extends Service {
     // platform. On 2.0 or later we override onStartCommand() so this
     // method will not be called.
     @Override
-    public void onStart(Intent intent, int startId) {
+    public int onStartCommand(Intent intent, int flags, int startId) {;
 
-        super.onStart(intent, startId);
-
-        if (intent == null || intent.getExtras() == null) {
-            return;
+        if (isServiceStarted() || intent == null || intent.getExtras() == null) {
+            return START_NOT_STICKY;
         }
 
         ((ProxyDroidApplication)getApplication())
@@ -597,18 +566,6 @@ public class ProxyDroidService extends Service {
 
                     handler.sendEmptyMessage(MSG_CONNECT_SUCCESS);
 
-                    // for widget, maybe exception here
-                    try {
-                        RemoteViews views = new RemoteViews(getPackageName(),
-                                R.layout.proxydroid_appwidget);
-                        views.setImageViewResource(R.id.serviceToggle, R.drawable.on);
-                        AppWidgetManager awm = AppWidgetManager.getInstance(ProxyDroidService.this);
-                        awm.updateAppWidget(awm.getAppWidgetIds(new ComponentName(
-                                ProxyDroidService.this, ProxyDroidWidgetProvider.class)), views);
-                    } catch (Exception ignore) {
-                        // Nothing
-                    }
-
                 } else {
                     // Connection or forward unsuccessful
 
@@ -622,6 +579,8 @@ public class ProxyDroidService extends Service {
         }).start();
 
         markServiceStarted();
+
+        return START_NOT_STICKY;
     }
 
 }

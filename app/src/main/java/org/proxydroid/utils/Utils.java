@@ -439,7 +439,7 @@ public class Utils {
           read = stdout.read(buf);
           result.append(new String(buf, 0, read));
         }
-
+        int a = 2;
       } catch (Exception ex) {
         Log.e(TAG, "Cannot execute command", ex);
         if (result != null)
