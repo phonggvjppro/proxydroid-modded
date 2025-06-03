@@ -3,6 +3,7 @@
     package="org.proxydroid">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -18,7 +19,9 @@
 
 
         <activity
-            android:name="org.proxydroid.ProxyDroid"
+            android:theme="@style/Theme.AppCompat.DayNight"
+            android:exported="true"
+            android:name="org.proxydroid.ProxyDroidActivity"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -39,23 +42,16 @@
 
         <service
             android:name="org.proxydroid.ProxyDroidService"
-            android:enabled="true" />
+            android:enabled="true"
+            android:exported="true"/>
 
-        <receiver android:name="org.proxydroid.ConnectivityBroadcastReceiver">
+        <receiver android:name="ProxyDroidCLI" android:exported="true">
             <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-            </intent-filter>
-        </receiver>
-        <receiver android:name="org.proxydroid.ProxyDroidWidgetProvider">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="org.proxydroid.ProxyDroidWidgetProvider.PROXY_SWITCH_ACTION" />
-                <action android:name="org.proxydroid.ProxyDroidWidgetProvider.CHANGE_CONFIG_ACTION"/>
+                <action android:name="org.proxydroid.TOGGLE_STATE" />
+                <action android:name="org.proxydroid.PROFILE_CONFIGURE" />
+                <action android:name="org.proxydroid.PROFILE_CHANGE" />
             </intent-filter>
 
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/proxydroid_appwidget_provider" />
         </receiver>
     </application>
 
