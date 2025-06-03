@@ -38,17 +38,18 @@
 
 package org.proxydroid;
 
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.preference.PreferenceManager;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -72,6 +73,7 @@ import org.proxydroid.utils.Utils;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -79,6 +81,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class BypassListActivity extends AppCompatActivity implements
 		OnClickListener, OnItemClickListener, OnItemLongClickListener {
@@ -95,7 +98,87 @@ public class BypassListActivity extends AppCompatActivity implements
 
 	private ListAdapter adapter;
 	private ArrayList<String> bypassList;
-	private Profile profile = new Profile();
+	private final Profile profile = new Profile();
+
+	private final ActivityResultLauncher<Intent>  importReqResultLauncher = registerForActivityResult(
+			new ActivityResultContracts.StartActivityForResult(),
+			result -> {
+				if (result.getResultCode() == RESULT_OK) {
+					if (result.getData() == null)
+						return;
+					final String path = result.getData().getStringExtra(Constraints.FILE_PATH);
+					if (path == null || path.equals(""))
+						return;
+
+					final AlertDialog ad = new AlertDialog.Builder(this)
+							.setMessage(getString(R.string.importing))
+							.setCancelable(true)
+							.create();
+					ad.show();
+
+					final Handler h = new Handler(Looper.getMainLooper()) {
+						@Override
+						public void handleMessage(Message msg) {
+							refreshList();
+							ad.dismiss();
+						}
+					};
+
+					new Thread() {
+						@Override
+						public void run() {
+							Process su;
+							try {
+								su = Runtime.getRuntime().exec(Utils.getRootShell());
+								DataOutputStream os = new DataOutputStream(su.getOutputStream());
+								BufferedReader reader = new BufferedReader(new InputStreamReader(su.getInputStream()));
+
+								os.writeBytes("cat " + path + "\n");
+								os.writeBytes("exit\n");
+								os.flush();
+								su.waitFor();
+
+								bypassList.clear();
+								String line;
+								while ((line = reader.readLine()) != null) {
+									String addr = Profile.validateAddr(line);
+									if (addr != null)
+										bypassList.add(addr);
+								}
+
+								os.close();
+								reader.close();
+							} catch (Exception e) {
+								Log.e(TAG, "error to invoke root shell", e);
+								return;
+							}
+
+
+							FileInputStream input;
+							try {
+								input = new FileInputStream(path);
+								BufferedReader br = new BufferedReader(
+										new InputStreamReader(input));
+								bypassList.clear();
+								while (true) {
+									String line = br.readLine();
+									if (line == null)
+										break;
+
+								}
+								br.close();
+								input.close();
+							} catch (FileNotFoundException e) {
+								Log.e(TAG, "error to open file", e);
+							} catch (IOException e) {
+								Log.e(TAG, "error to read file", e);
+							}
+							h.sendEmptyMessage(MSG_IMPORT_ADDR);
+						}
+					}.start();
+				}
+			}
+	);
 
 	final Handler handler = new Handler(Looper.getMainLooper()) {
 		@Override
@@ -169,21 +252,22 @@ public class BypassListActivity extends AppCompatActivity implements
 		super.onCreate(savedInstanceState);
 
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
 		setContentView(R.layout.bypass_list);
-		TextView addButton = (TextView) findViewById(R.id.addBypassAddr);
+		TextView addButton = findViewById(R.id.addBypassAddr);
 		addButton.setOnClickListener(this);
 
-		TextView presetButton = (TextView) findViewById(R.id.presetBypassAddr);
+		TextView presetButton = findViewById(R.id.presetBypassAddr);
 		presetButton.setOnClickListener(this);
 
-		TextView importButton = (TextView) findViewById(R.id.importBypassAddr);
+		TextView importButton = findViewById(R.id.importBypassAddr);
 		importButton.setOnClickListener(this);
 
-		TextView exportButton = (TextView) findViewById(R.id.exportBypassAddr);
+		TextView exportButton = findViewById(R.id.exportBypassAddr);
 		exportButton.setOnClickListener(this);
 
 		refreshList();
+
+
 	}
 
 	@Override
@@ -231,63 +315,11 @@ public class BypassListActivity extends AppCompatActivity implements
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode == Constraints.IMPORT_REQUEST) {
-			if (resultCode == RESULT_OK) {
-				if (data == null)
-					return;
-				final String path = data.getStringExtra(Constraints.FILE_PATH);
-				if (path == null || path.equals(""))
-					return;
 
-				final ProgressDialog pd = ProgressDialog.show(this, "",
-						getString(R.string.importing), true, true);
-
-				final Handler h = new Handler(Looper.getMainLooper()) {
-					@Override
-					public void handleMessage(Message msg) {
-						refreshList();
-						if (pd != null) {
-							pd.dismiss();
-						}
-					}
-				};
-
-				new Thread() {
-					@Override
-					public void run() {
-						FileInputStream input;
-						try {
-							input = new FileInputStream(path);
-							BufferedReader br = new BufferedReader(
-									new InputStreamReader(input));
-							bypassList.clear();
-							while (true) {
-								String line = br.readLine();
-								if (line == null)
-									break;
-								String addr = Profile.validateAddr(line);
-								if (addr != null)
-									bypassList.add(addr);
-							}
-							br.close();
-							input.close();
-						} catch (FileNotFoundException e) {
-							Log.e(TAG, "error to open file", e);
-						} catch (IOException e) {
-							Log.e(TAG, "error to read file", e);
-						}
-						h.sendEmptyMessage(MSG_IMPORT_ADDR);
-					}
-				}.start();
-			}
-		}
 	}
 
 	private void importAddr() {
-		if(Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-			startActivityForResult(new Intent(this, FileChooser.class),
-					Constraints.IMPORT_REQUEST);
-		}
+		importReqResultLauncher.launch(new Intent(this, FileChooser.class));
 	}
 
 	private void exportAddr() {
@@ -297,8 +329,7 @@ public class BypassListActivity extends AppCompatActivity implements
 		LayoutInflater factory = LayoutInflater.from(this);
 		final View textEntryView = factory.inflate(
 				R.layout.alert_dialog_text_entry, null);
-		final EditText path = (EditText) textEntryView
-				.findViewById(R.id.text_edit);
+		final EditText path = textEntryView.findViewById(R.id.text_edit);
 
 		path.setText(Utils.getDataPath(this) + "/" + profile.getHost() + ".opt");
 
@@ -310,39 +341,31 @@ public class BypassListActivity extends AppCompatActivity implements
 							@Override
 							public void onClick(DialogInterface dialog,
 									int whichButton) {
-								if (path.getText() == null
-										|| path.getText().toString() == null)
+								if (path.getText() == null)
 									dialog.dismiss();
 								new Thread() {
 									@Override
 									public void run() {
-
-										FileOutputStream output;
+										Process su;
 										try {
-											File file = new File(path.getText()
-													.toString());
-											if (!file.exists())
-												file.createNewFile();
+											su = Runtime.getRuntime().exec(Utils.getRootShell());
+											DataOutputStream os = new DataOutputStream(su.getOutputStream());
+											os.writeBytes("rm -f " + path.getText() + "\n");
 
-											output = new FileOutputStream(file);
-											BufferedOutputStream bw = new BufferedOutputStream(
-													output);
+											os.writeBytes("cat > " + path.getText() + "<<EOF\n");
 											for (String addr : bypassList) {
-												addr = Profile
-														.validateAddr(addr);
+												addr = Profile.validateAddr(addr);
 												if (addr != null)
-													bw.write((addr + "\n")
-															.getBytes());
+													os.writeBytes(addr + "\n");
 											}
+											os.writeBytes("EOF\n");
+											os.writeBytes("exit\n");
+											os.flush();
 
-											bw.flush();
-											bw.close();
-											output.flush();
-											output.close();
-										} catch (FileNotFoundException e) {
-											Log.e(TAG, "error to open file", e);
-										} catch (IOException e) {
-											Log.e(TAG, "error to write file", e);
+											su.waitFor();
+									        os.close();
+										} catch (Exception e) {
+											Log.e(TAG, "error to invoke root shell", e);
 										}
 
 										Message msg = new Message();
@@ -401,8 +424,7 @@ public class BypassListActivity extends AppCompatActivity implements
 		LayoutInflater factory = LayoutInflater.from(this);
 		final View textEntryView = factory.inflate(
 				R.layout.alert_dialog_text_entry, null);
-		final EditText addrText = (EditText) textEntryView
-				.findViewById(R.id.text_edit);
+		final EditText addrText = textEntryView.findViewById(R.id.text_edit);
 
 		if (msg == MSG_EDIT_ADDR)
 			addrText.setText(bypassList.get(idx));
@@ -422,8 +444,7 @@ public class BypassListActivity extends AppCompatActivity implements
 								new Thread() {
 									@Override
 									public void run() {
-										EditText addrText = (EditText) textEntryView
-												.findViewById(R.id.text_edit);
+										EditText addrText = textEntryView.findViewById(R.id.text_edit);
 										String addr = addrText.getText()
 												.toString();
 										addr = Profile.validateAddr(addr);
@@ -455,16 +476,17 @@ public class BypassListActivity extends AppCompatActivity implements
 
 	private void reset(final String[] list) {
 
-		final ProgressDialog pd = ProgressDialog.show(this, "",
-				getString(R.string.reseting), true, true);
+		final AlertDialog ad = new AlertDialog.Builder(this)
+				.setMessage(getString(R.string.reseting))
+				.setCancelable(true)
+				.create();
+		ad.show();
 
-		final Handler h = new Handler() {
+		final Handler h = new Handler(Looper.getMainLooper()) {
 			@Override
 			public void handleMessage(Message msg) {
 				refreshList();
-				if (pd != null) {
-					pd.dismiss();
-				}
+				ad.dismiss();
 			}
 		};
 
@@ -491,17 +513,14 @@ public class BypassListActivity extends AppCompatActivity implements
 
 		if (bypassList != null) {
 			profile.setBypassAddrs(Profile.encodeAddrs(bypassList
-					.toArray(new String[bypassList.size()])));
+					.toArray(new String[0])));
 			profile.setProfile(settings);
 		}
 
 		String[] addrs = Profile.decodeAddrs(profile.getBypassAddrs());
 		bypassList = new ArrayList<String>();
 
-		for (String addr : addrs) {
-			bypassList.add(addr);
-			// Log.d(TAG, addr);
-		}
+		Collections.addAll(bypassList, addrs);
 
 		final LayoutInflater inflater = getLayoutInflater();
 
@@ -526,7 +545,7 @@ public class BypassListActivity extends AppCompatActivity implements
 			}
 		};
 
-		ListView list = (ListView) findViewById(R.id.BypassListView);
+		ListView list = findViewById(R.id.BypassListView);
 		list.setAdapter(adapter);
 		list.setOnItemClickListener(this);
 		list.setOnItemLongClickListener(this);

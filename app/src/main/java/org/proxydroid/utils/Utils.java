@@ -188,6 +188,9 @@ public class Utils {
 
   }
 
+  public static String getRootShell() {
+    return root_shell;
+  }
   public static boolean isRoot() {
 
     if (isRoot != -1)
@@ -251,6 +254,19 @@ public class Utils {
     return runRootCommand(command, 10 * 1000);
 
   }
+
+  public static String runRootCommandResult(String command, long timeout) {
+    StringBuilder res = new StringBuilder();
+    int exitcode = runScript(command, res, timeout, true);
+    if (exitcode == TIME_OUT) {
+      return null;
+    }
+    return res.toString();
+  }
+
+    public static String runRootCommandResult(String command) {
+        return runRootCommandResult(command, 10 * 1000);
+    }
 
   private synchronized static int runScript(String script, StringBuilder res,
                                             long timeout, boolean asroot) {
