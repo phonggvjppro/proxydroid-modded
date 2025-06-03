@@ -143,11 +143,6 @@ public class AppManager extends AppCompatActivity implements OnCheckedChangeList
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		Bundle firebaseBundle = new Bundle();
-		firebaseBundle.putString(FirebaseAnalytics.Param.SCREEN_NAME, "app_manager");
-		((ProxyDroidApplication)getApplication()).firebaseAnalytics.logEvent(
-				"app_manager_opened", firebaseBundle
-		);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		this.setContentView(R.layout.layout_apps);
@@ -387,10 +382,7 @@ public class AppManager extends AppCompatActivity implements OnCheckedChangeList
 
 			if (aInfo.processName == null)
 				continue;
-			if (pMgr.getApplicationLabel(aInfo) == null
-					|| pMgr.getApplicationLabel(aInfo).toString().equals(""))
-				continue;
-			if (pMgr.getApplicationIcon(aInfo) == null)
+			if (pMgr.getApplicationLabel(aInfo).toString().equals(""))
 				continue;
 
 			ProxyedApp tApp = new ProxyedApp();
