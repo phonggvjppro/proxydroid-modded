@@ -41,12 +41,6 @@
         android:title="@string/proxy_type">
     </ListPreference>
 
-    <CheckBoxPreference
-        android:key="isAutoConnect"
-        android:summary="@string/auto_connect_summary"
-        android:title="@string/auto_connect">
-    </CheckBoxPreference>
-
     <Preference
         android:key="bypassAddrs"
         android:summary="@string/set_bypass_summary"
@@ -93,7 +87,7 @@
   <PreferenceCategory android:title="@string/fearute_cat">
     <CheckBoxPreference
         android:defaultValue="true"
-        android:key="isAutoSetProxy"
+        android:key="isGlobalProxy"
         android:summary="@string/auto_set_proxy_summary"
         android:title="@string/auto_set_proxy">
     </CheckBoxPreference>

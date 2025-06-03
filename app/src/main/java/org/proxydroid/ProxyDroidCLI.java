@@ -42,14 +42,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.util.Log;
 
 import androidx.preference.PreferenceManager;
 
 import org.proxydroid.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ProxyDroidCLI extends BroadcastReceiver {
@@ -78,7 +80,7 @@ public class ProxyDroidCLI extends BroadcastReceiver {
 						bundle.putString("certificate", profile.getCertificate());
 
 						bundle.putString("proxyType", profile.getProxyType());
-						bundle.putBoolean("isAutoSetProxy", profile.isAutoSetProxy());
+						bundle.putBoolean("isAutoSetProxy", profile.isGlobalProxy());
 						bundle.putBoolean("isBypassApps", profile.isBypassApps());
 						bundle.putBoolean("isAuth", profile.isAuth());
 						bundle.putBoolean("isNTLM", profile.isNTLM());
@@ -148,8 +150,8 @@ public class ProxyDroidCLI extends BroadcastReceiver {
 			}
 			profile.setProxyType(proxyType);
 
-			boolean isAutoSetProxy = intent.getBooleanExtra("isAutoSetProxy", profile.isAutoSetProxy());
-			profile.setAutoSetProxy(isAutoSetProxy);
+			boolean isGlobalProxy = intent.getBooleanExtra("isGlobalProxy", profile.isGlobalProxy());
+			profile.setGlobalProxy(isGlobalProxy);
 
 			boolean isBypassApps = intent.getBooleanExtra("isBypassApps", profile.isBypassApps());
 			profile.setBypassApps(isBypassApps);
@@ -162,6 +164,22 @@ public class ProxyDroidCLI extends BroadcastReceiver {
 
 			boolean isPAC = intent.getBooleanExtra("isPAC", profile.isPAC());
 			profile.setPAC(isPAC);
+
+			String proxyedApps = intent.getStringExtra("proxyedApps");
+			if (proxyedApps != null) {
+				String[] packages = proxyedApps.split("//|");
+				ArrayList<String> validApps = new ArrayList<>();
+				try {
+					PackageInfo pi = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+					validApps.add(context.getPackageManager().getNameForUid(pi.applicationInfo.uid));
+				} catch (PackageManager.NameNotFoundException ignored) {
+
+				}
+				proxyedApps = String.join("|", validApps);
+
+			} else
+				proxyedApps = profile.getProxyedApps();
+			profile.setProxyedApps(proxyedApps);
 
 			profile.setProfile(settings);
 

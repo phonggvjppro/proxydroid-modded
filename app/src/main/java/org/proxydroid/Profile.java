@@ -22,14 +22,11 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.util.Log;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.proxydroid.utils.Utils;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -51,12 +48,10 @@ public class Profile implements Serializable {
 	private String password;
         private String certificate;
 	private String proxyedApps;
-	private boolean isAutoConnect = false;
-	private boolean isAutoSetProxy = false;
+	private boolean isGlobalProxy = false;
 	private boolean isBypassApps = false;
 	private boolean isAuth = false;
 	private boolean isNTLM = false;
-	private boolean isDNSProxy = false;
 	private boolean isPAC = false;
 
 	private String domain;
@@ -79,11 +74,9 @@ public class Profile implements Serializable {
 
 		isAuth = settings.getBoolean("isAuth", false);
 		isNTLM = settings.getBoolean("isNTLM", false);
-		isAutoSetProxy = settings.getBoolean("isAutoSetProxy", false);
+		isGlobalProxy = settings.getBoolean("isGlobalProxy", false);
 		isBypassApps = settings.getBoolean("isBypassApps", false);
-		isDNSProxy = settings.getBoolean("isDNSProxy", false);
 		isPAC = settings.getBoolean("isPAC", false);
-		isAutoConnect = settings.getBoolean("isAutoConnect", false);
 
 		String portText = settings.getString("port", "");
 
@@ -112,11 +105,9 @@ public class Profile implements Serializable {
 		ed.putString("domain", domain);
 		ed.putString("proxyType", proxyType);
                 ed.putString("certificate", certificate);
-		ed.putBoolean("isAutoConnect", isAutoConnect);
-		ed.putBoolean("isAutoSetProxy", isAutoSetProxy);
+		ed.putBoolean("isGlobalProxy", isGlobalProxy);
 		ed.putBoolean("isBypassApps", isBypassApps);
 		ed.putBoolean("isPAC", isPAC);
-		ed.putBoolean("isDNSProxy", isDNSProxy);
 		ed.commit();
 	}
 
@@ -129,11 +120,9 @@ public class Profile implements Serializable {
                 certificate = "";
 		isAuth = false;
 		proxyType = "http";
-		isAutoConnect = false;
 		isNTLM = false;
 		bypassAddrs = "";
 		proxyedApps = "";
-		isDNSProxy = false;
 		isPAC = false;
 	}
 
@@ -157,10 +146,8 @@ public class Profile implements Serializable {
 
 		obj.put("isAuth", isAuth);
 		obj.put("isNTLM", isNTLM);
-		obj.put("isAutoConnect", isAutoConnect);
-		obj.put("isAutoSetProxy", isAutoSetProxy);
+		obj.put("isGlobalProxy", isGlobalProxy);
 		obj.put("isBypassApps", isBypassApps);
-		obj.put("isDNSProxy", isDNSProxy);
 		obj.put("isPAC", isPAC);
 
 		obj.put("port", port);
@@ -228,10 +215,8 @@ public class Profile implements Serializable {
 
 		isAuth = jd.getBoolean("isAuth", false);
 		isNTLM = jd.getBoolean("isNTLM", false);
-		isAutoConnect = jd.getBoolean("isAutoConnect", false);
-		isAutoSetProxy = jd.getBoolean("isAutoSetProxy", false);
+		isGlobalProxy = jd.getBoolean("isGlobalProxy", false);
 		isBypassApps = jd.getBoolean("isBypassApps", false);
-		isDNSProxy = jd.getBoolean("isDNSProxy", false);
 		isPAC = jd.getBoolean("isPAC", false);
 
 	}
@@ -372,6 +357,7 @@ public class Profile implements Serializable {
 		this.bypassAddrs = bypassAddrs;
 	}
 
+
 	/**
 	 * @return the user
 	 */
@@ -418,33 +404,18 @@ public class Profile implements Serializable {
 	}
 
 	/**
-	 * @return the isAutoConnect
-	 */
-	public Boolean isAutoConnect() {
-		return isAutoConnect;
-	}
-
-	/**
-	 * @param isAutoConnect
-	 *            the isAutoConnect to set
-	 */
-	public void setAutoConnect(Boolean isAutoConnect) {
-		this.isAutoConnect = isAutoConnect;
-	}
-
-	/**
 	 * @return the isAutoSetProxy
 	 */
-	public Boolean isAutoSetProxy() {
-		return isAutoSetProxy;
+	public Boolean isGlobalProxy() {
+		return isGlobalProxy;
 	}
 
 	/**
-	 * @param isAutoSetProxy
+	 * @param isGlobalProxy
 	 *            the isAutoSetProxy to set
 	 */
-	public void setAutoSetProxy(Boolean isAutoSetProxy) {
-		this.isAutoSetProxy = isAutoSetProxy;
+	public void setGlobalProxy(Boolean isGlobalProxy) {
+		this.isGlobalProxy = isGlobalProxy;
 	}
 
 	/**
@@ -520,6 +491,14 @@ public class Profile implements Serializable {
 	 */
 	public void setPAC(boolean isPAC) {
 		this.isPAC = isPAC;
+	}
+
+	public void setProxyedApps(String proxyedApps) {
+		this.proxyedApps = proxyedApps;
+	}
+
+	public String getProxyedApps() {
+		return proxyedApps;
 	}
 
 	static class ProfileUtils {

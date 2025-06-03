@@ -42,13 +42,8 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.appwidget.AppWidgetManager;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.media.AudioManager;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -57,7 +52,6 @@ import android.os.Looper;
 import android.os.Message;
 import androidx.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.RemoteViews;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
@@ -133,7 +127,7 @@ public class ProxyDroidService extends Service {
     private SharedPreferences settings = null;
 
     private boolean hasRedirectSupport = true;
-    private boolean isAutoSetProxy = false;
+    private boolean isGlobalProxy = false;
     private boolean isBypassApps = false;
 
     private ProxyedApp[] apps;
@@ -244,7 +238,7 @@ public class ProxyDroidService extends Service {
 
             }
 
-            if (isAutoSetProxy || isBypassApps) {
+            if (isGlobalProxy || isBypassApps) {
                 cmd.append(hasRedirectSupport ? redirectCmd : dnatCmd);
             } else {
                 // for host specified apps
@@ -530,7 +524,7 @@ public class ProxyDroidService extends Service {
         bypassAddrs = bundle.getString("bypassAddrs");
         proxyType = bundle.getString("proxyType");
         port = bundle.getInt("port");
-        isAutoSetProxy = bundle.getBoolean("isAutoSetProxy");
+        isGlobalProxy = bundle.getBoolean("isGlobalProxy");
         isBypassApps = bundle.getBoolean("isBypassApps");
         isAuth = bundle.getBoolean("isAuth");
         isNTLM = bundle.getBoolean("isNTLM");

@@ -38,7 +38,6 @@
 
 package org.proxydroid;
 
-import android.content.BroadcastReceiver;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -113,8 +112,7 @@ public class ProxyDroid extends PreferenceFragmentCompat
     private AlertDialog pd = null;
     private String profile;
     private final Profile mProfile = new Profile();
-    private CheckBoxPreference isAutoConnectCheck;
-    private CheckBoxPreference isAutoSetProxyCheck;
+    private CheckBoxPreference isGlobalProxy;
     private CheckBoxPreference isAuthCheck;
     private CheckBoxPreference isNTLMCheck;
     private CheckBoxPreference isPACCheck;
@@ -251,11 +249,10 @@ public class ProxyDroid extends PreferenceFragmentCompat
         profileList = findPreference("profile");
 
         isRunningCheck = findPreference("isRunning");
-        isAutoSetProxyCheck = findPreference("isAutoSetProxy");
+        isGlobalProxy = findPreference("isGlobalProxy");
         isAuthCheck = findPreference("isAuth");
         isNTLMCheck = findPreference("isNTLM");
         isPACCheck = findPreference("isPAC");
-        isAutoConnectCheck = findPreference("isAutoConnect");
         isBypassAppsCheck = findPreference("isBypassApps");
 
         final SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(requireActivity());
@@ -434,7 +431,7 @@ public class ProxyDroid extends PreferenceFragmentCompat
             bundle.putString("certificate", mProfile.getCertificate());
 
             bundle.putString("proxyType", mProfile.getProxyType());
-            bundle.putBoolean("isAutoSetProxy", mProfile.isAutoSetProxy());
+            bundle.putBoolean("isGlobalProxy", mProfile.isGlobalProxy());
             bundle.putBoolean("isBypassApps", mProfile.isBypassApps());
             bundle.putBoolean("isAuth", mProfile.isAuth());
             bundle.putBoolean("isNTLM", mProfile.isNTLM());
@@ -468,8 +465,7 @@ public class ProxyDroid extends PreferenceFragmentCompat
 
         isAuthCheck.setChecked(mProfile.isAuth());
         isNTLMCheck.setChecked(mProfile.isNTLM());
-        isAutoConnectCheck.setChecked(mProfile.isAutoConnect());
-        isAutoSetProxyCheck.setChecked(mProfile.isAutoSetProxy());
+        isGlobalProxy.setChecked(mProfile.isGlobalProxy());
         isBypassAppsCheck.setChecked(mProfile.isBypassApps());
         isPACCheck.setChecked(mProfile.isPAC());
 
@@ -503,8 +499,7 @@ public class ProxyDroid extends PreferenceFragmentCompat
 
         isAuthCheck.setEnabled(false);
         isNTLMCheck.setEnabled(false);
-        isAutoSetProxyCheck.setEnabled(false);
-        isAutoConnectCheck.setEnabled(false);
+        isGlobalProxy.setEnabled(false);
         isPACCheck.setEnabled(false);
         isBypassAppsCheck.setEnabled(false);
     }
@@ -528,15 +523,14 @@ public class ProxyDroid extends PreferenceFragmentCompat
         if ("https".equals(proxyTypeList.getValue())) {
             certificateText.setEnabled(true);
         }
-        if (!isAutoSetProxyCheck.isChecked()) {
+        if (!isGlobalProxy.isChecked()) {
             proxyedApps.setEnabled(true);
             isBypassAppsCheck.setEnabled(true);
         }
 
         profileList.setEnabled(true);
-        isAutoSetProxyCheck.setEnabled(true);
+        isGlobalProxy.setEnabled(true);
         isAuthCheck.setEnabled(true);
-        isAutoConnectCheck.setEnabled(true);
         isPACCheck.setEnabled(true);
     }
 
@@ -725,6 +719,7 @@ public class ProxyDroid extends PreferenceFragmentCompat
             } else {
                 hostText.setSummary(settings.getString("host", ""));
             }
+            hostText.setText(settings.getString("host", ""));
             isPACCheck.setChecked(settings.getBoolean("isPAC", false));
         }
 
@@ -757,19 +752,15 @@ public class ProxyDroid extends PreferenceFragmentCompat
             certificateText.setEnabled("https".equals(settings.getString("proxyType", "")));
         }
 
-        if (key.equals("isAutoConnect")) {
-            isAutoConnectCheck.setChecked(settings.getBoolean("isAutoConnect", false));
-        }
-
-        if (key.equals("isAutoSetProxy")) {
-            if (settings.getBoolean("isAutoSetProxy", false)) {
+        if (key.equals("isGlobalProxy")) {
+            if (settings.getBoolean("isGlobalProxy", false)) {
                 proxyedApps.setEnabled(false);
                 isBypassAppsCheck.setEnabled(false);
             } else {
                 proxyedApps.setEnabled(true);
                 isBypassAppsCheck.setEnabled(true);
             }
-            isAutoSetProxyCheck.setChecked(settings.getBoolean("isAutoSetProxy", false));
+            isGlobalProxy.setChecked(settings.getBoolean("isGlobalProxy", false));
         }
 
         if (key.equals("isRunning")) {
@@ -790,12 +781,15 @@ public class ProxyDroid extends PreferenceFragmentCompat
             } else {
                 userText.setSummary(settings.getString("user", ""));
             }
+            userText.setText(settings.getString("user", ""));
         } else if (key.equals("domain")) {
             if (settings.getString("domain", "").equals("")) {
                 domainText.setSummary(getString(R.string.domain_summary));
             } else {
                 domainText.setSummary(settings.getString("domain", ""));
             }
+            domainText.setText(settings.getString("domain", ""));
+
         } else if (key.equals("proxyType")) {
             if (settings.getString("proxyType", "").equals("")) {
                 proxyTypeList.setSummary(getString(R.string.proxy_type_summary));
@@ -804,6 +798,7 @@ public class ProxyDroid extends PreferenceFragmentCompat
                 proxyTypeList.setSummary(settings.getString("proxyType", "").toUpperCase());
                 certificateText.setSummary(settings.getString("certificate", ""));
             }
+            proxyTypeList.setValue(settings.getString("proxyType", ""));
         } else if (key.equals("bypassAddrs")) {
             if (settings.getString("bypassAddrs", "").equals("")) {
                 bypassAddrs.setSummary(getString(R.string.set_bypass_summary));
@@ -817,6 +812,7 @@ public class ProxyDroid extends PreferenceFragmentCompat
             } else {
                 portText.setSummary(settings.getString("port", ""));
             }
+            portText.setText(settings.getString("port", "3123"));
         } else if (key.equals("host")) {
             if (settings.getString("host", "").equals("")) {
                 hostText.setSummary(settings.getBoolean("isPAC", false) ? R.string.host_pac_summary
@@ -824,12 +820,14 @@ public class ProxyDroid extends PreferenceFragmentCompat
             } else {
                 hostText.setSummary(settings.getString("host", ""));
             }
+            hostText.setText(settings.getString("host", ""));
         } else if (key.equals("password")) {
             if (!settings.getString("password", "").equals("")) {
                 passwordText.setSummary("*********");
             } else {
                 passwordText.setSummary(getString(R.string.password_summary));
             }
+            passwordText.setText(settings.getString("password", ""));
         }
     }
 
