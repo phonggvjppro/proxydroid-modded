@@ -43,17 +43,30 @@
 
 - List all properties:
 
-  | Name           | Type           | Description                                                                     |
-  |----------------|----------------|---------------------------------------------------------------------------------|
-  | proxyType      | string         | one of: http, https, http-tunnel, socks4, socks5                                |
-  | host           | string         | Proxy host address                                                              |
-  | port           | int            | Proxy port number                                                               |
-  | isPAC          | bool           | Use PAC file. If true, the host prop will be used as PAC url                    |
-  | isGlobalProxy  | bool           | Set global proxy                                                                |
-  | isAuth         | bool           | Use authentication for proxy                                                    |
-  | user           | string         | Proxy username                                                                  |
-  | password       | string         | Proxy password                                                                  |
-  | bypassAddrs    | string         | List of hosts to bypass the proxy                                               |
-  | isNTLM         | bool           | Use NTLM authentication for proxy                                               |
-  | proxyedApps    | string         | List of apps to use proxy, separated by pipe. If empty, all apps will use proxy |
-  | isBypassApps   | bool           | If true, the proxy will be bypassed for the apps in proxyedApps                 |
+  | Name           | Type           | Description                                                                                             |
+  |----------------|----------------|---------------------------------------------------------------------------------------------------------|
+  | proxyType      | string         | one of: http, https, http-tunnel, socks4, socks5                                                        |
+  | host           | string         | Proxy host address                                                                                      |
+  | port           | int            | Proxy port number                                                                                       |
+  | isPAC          | bool           | Use PAC file. If true, the host prop will be used as PAC url                                            |
+  | isGlobalProxy  | bool           | Set global proxy                                                                                        |
+  | isAuth         | bool           | Use authentication for proxy                                                                            |
+  | user           | string         | Proxy username                                                                                          |
+  | password       | string         | Proxy password                                                                                          |
+  | bypassAddrs    | string         | List of hosts to bypass the proxy, separated by pipe                                                    |
+  | isNTLM         | bool           | Use NTLM authentication for proxy                                                                       |
+  | domain         | string         | Domain name for NTLM 								                      |
+  | proxyedApps    | string         | List of apps (package name) to use proxy, separated by pipe. If empty, all apps will use proxy          |
+  | isBypassApps   | bool           | If true, the proxy will be bypassed for the apps in proxyedApps                                         |
+
+### Connect Proxy
+- Connect to the proxy:
+  ```
+  adb shell am broadcast -a org.proxydroid.TOGGLE_STATE --ez start true
+  ```
+- Disconnect from the proxy:
+  ```
+    adb shell am broadcast -a org.proxydroid.TOGGLE_STATE --ez start false
+  ```
+
+**_NOTE:_** From Android 8.0, you need to use '-n org.proxydroid/.ProxyDroidCLI' to send broadcast
