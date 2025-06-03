@@ -4,7 +4,6 @@
 package org.proxydroid;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
@@ -13,8 +12,9 @@ import android.content.pm.PackageManager;
 import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -33,7 +33,10 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import org.proxydroid.utils.ImageLoader;
 import org.proxydroid.utils.ImageLoaderFactory;
@@ -56,7 +59,7 @@ public class AppManager extends AppCompatActivity implements OnCheckedChangeList
 
 	private TextView overlay;
 
-	private ProgressDialog pd = null;
+	private AlertDialog ad = null;
 	private ListAdapter adapter;
 
 	private ImageLoader dm;
@@ -68,13 +71,15 @@ public class AppManager extends AppCompatActivity implements OnCheckedChangeList
 
 	private boolean appsLoaded = false;
 
-	final Handler handler = new Handler() {
+	final Handler handler = new Handler(Looper.getMainLooper()) {
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 			case MSG_LOAD_START:
-				pd = ProgressDialog.show(AppManager.this, "",
-						getString(R.string.loading), true, true);
+				ad = new AlertDialog.Builder(AppManager.this)
+						.setMessage(R.string.loading)
+						.setCancelable(true).create();
+				ad.show();
 				break;
 			case MSG_LOAD_FINISH:
 
@@ -109,9 +114,9 @@ public class AppManager extends AppCompatActivity implements OnCheckedChangeList
 					}
 				});
 
-				if (pd != null) {
-					pd.dismiss();
-					pd = null;
+				if (ad != null) {
+					ad.dismiss();
+					ad = null;
 				}
 				break;
 			}
@@ -138,9 +143,11 @@ public class AppManager extends AppCompatActivity implements OnCheckedChangeList
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		((ProxyDroidApplication)getApplication())
-				.firebaseAnalytics.setCurrentScreen(this, "app_manager", null);
-		
+		Bundle firebaseBundle = new Bundle();
+		firebaseBundle.putString(FirebaseAnalytics.Param.SCREEN_NAME, "app_manager");
+		((ProxyDroidApplication)getApplication()).firebaseAnalytics.logEvent(
+				"app_manager_opened", firebaseBundle
+		);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
 		this.setContentView(R.layout.layout_apps);
