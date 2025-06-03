@@ -338,7 +338,7 @@ public class ProxyDroidService extends Service {
 
         Intent intent = new Intent(this, ProxyDroid.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        pendIntent = PendingIntent.getActivity(this, 0, intent, 0);
+        pendIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
     }
 
     /**
