@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
   <PreferenceCategory android:title="@string/function_cat">
-    <CheckBoxPreference
+    <SwitchPreference
         android:key="isRunning"
         android:summary="@string/service_summary"
         android:title="@string/service_controller">
-    </CheckBoxPreference>
+    </SwitchPreference>
 
     <ListPreference
         android:key="profile"
@@ -46,24 +46,6 @@
         android:summary="@string/auto_connect_summary"
         android:title="@string/auto_connect">
     </CheckBoxPreference>
-
-    <com.ksmaze.android.preference.ListPreferenceMultiSelect
-        android:defaultValue=""
-        android:dialogTitle="@string/ssid"
-        android:entries="@array/ssid_default_entries"
-        android:entryValues="@array/ssid_default_values"
-        android:key="ssid"
-        android:summary="@string/ssid_summary"
-        android:title="@string/ssid"/>
-
-    <com.ksmaze.android.preference.ListPreferenceMultiSelect
-        android:defaultValue=""
-        android:dialogTitle="@string/excluded_ssid"
-        android:entries="@array/excluded_ssid_default_entries"
-        android:entryValues="@array/excluded_ssid_default_values"
-        android:key="excludedSsid"
-        android:summary="@string/excluded_ssid_summary"
-        android:title="@string/excluded_ssid"/>
 
     <Preference
         android:key="bypassAddrs"
@@ -130,20 +112,5 @@
     </CheckBoxPreference>
 
   </PreferenceCategory>
-  <PreferenceCategory android:title="@string/notif_cat">
-    <RingtonePreference
-        android:key="settings_key_notif_ringtone"
-        android:ringtoneType="notification"
-        android:showDefault="true"
-        android:showSilent="true"
-        android:summary="@string/notif_ringtone_summary"
-        android:title="@string/notif_ringtone_title"/>
 
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="settings_key_notif_vibrate"
-        android:summary="@string/notif_vibrate_summary"
-        android:title="@string/notif_vibrate_title"/>
-  </PreferenceCategory>
-
-</PreferenceScreen>
+</androidx.preference.PreferenceScreen>
