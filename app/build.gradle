@@ -2,12 +2,12 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 //apply plugin: 'io.fabric'
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.0"
+    compileSdk 34
     defaultConfig {
+        namespace "org.proxydroid"
         applicationId "org.proxydroid"
-        minSdkVersion 16
-        targetSdkVersion 29
+        minSdkVersion 21
+        targetSdkVersion 34
         versionCode 72
         versionName "1.0.0"
         multiDexEnabled true
@@ -31,14 +31,14 @@ android {
 
     externalNativeBuild {
         cmake {
-            version '3.23.0'
+            version '3.28.0'
             path "src/main/cpp/CMakeLists.txt"
         }
     }
 }
 configurations.all {
     resolutionStrategy.dependencySubstitution {
-        substitute module('org.hamcrest:hamcrest-core:1.1') with module('junit:junit:4.10')
+        substitute module('org.hamcrest:hamcrest-core:1.1') using module('junit:junit:4.10')
     }
 }
 configurations {
@@ -47,12 +47,14 @@ configurations {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.1.0'
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'androidx.core:core:1.12.0'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
     implementation 'com.googlecode.json-simple:json-simple:1.1.1'
     implementation 'org.mozilla:rhino:1.7.11'
-    implementation 'com.google.firebase:firebase-core:17.2.1'
-    implementation 'com.google.firebase:firebase-analytics:17.2.1'
-    implementation 'com.android.support:multidex:1.0.3'
-    implementation 'androidx.test.ext:junit:1.1.2'
+    implementation 'com.google.firebase:firebase-core:21.1.1'
+    implementation 'com.google.firebase:firebase-analytics:22.4.0'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'androidx.test.ext:junit:1.2.1'
 }
