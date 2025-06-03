@@ -17,12 +17,19 @@
  */
 package org.proxydroid;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.util.Log;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.proxydroid.utils.Utils;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -53,8 +60,6 @@ public class Profile implements Serializable {
 	private boolean isPAC = false;
 
 	private String domain;
-	private String ssid;
-	private String excludedSsid;
 
 	public Profile() {
 		init();
@@ -67,8 +72,6 @@ public class Profile implements Serializable {
 		proxyType = settings.getString("proxyType", "http");
 		user = settings.getString("user", "");
 		password = settings.getString("password", "");
-		ssid = settings.getString("ssid", "");
-		excludedSsid = settings.getString("excludedSsid", "");
 		bypassAddrs = settings.getString("bypassAddrs", "");
 		proxyedApps = settings.getString("Proxyed", "");
 		domain = settings.getString("domain", "");
@@ -114,15 +117,12 @@ public class Profile implements Serializable {
 		ed.putBoolean("isBypassApps", isBypassApps);
 		ed.putBoolean("isPAC", isPAC);
 		ed.putBoolean("isDNSProxy", isDNSProxy);
-		ed.putString("ssid", ssid);
-		ed.putString("excludedSsid", excludedSsid);
 		ed.commit();
 	}
 
 	public void init() {
 		host = "";
 		port = 3128;
-		ssid = "";
 		user = "";
 		domain = "";
 		password = "";
@@ -130,8 +130,6 @@ public class Profile implements Serializable {
 		isAuth = false;
 		proxyType = "http";
 		isAutoConnect = false;
-		ssid = "";
-		excludedSsid = "";
 		isNTLM = false;
 		bypassAddrs = "";
 		proxyedApps = "";
@@ -148,8 +146,6 @@ public class Profile implements Serializable {
 	public JSONObject encodeJson() {
 		JSONObject obj = new JSONObject();
 		obj.put("name", name);
-		obj.put("ssid", ssid);
-		obj.put("excludedSsid", excludedSsid);
 		obj.put("host", host);
 		obj.put("proxyType", proxyType);
 		obj.put("user", user);
@@ -171,8 +167,8 @@ public class Profile implements Serializable {
 		return obj;
 	}
 
-	class JSONDecoder {
-		private JSONObject obj;
+	static class JSONDecoder {
+		private final JSONObject obj;
 
 		public JSONDecoder(String values) throws ParseException {
 			JSONParser parser = new JSONParser();
@@ -219,8 +215,6 @@ public class Profile implements Serializable {
 		}
 
 		name = jd.getString("name", "");
-		ssid = jd.getString("ssid", "");
-		excludedSsid = jd.getString("excludedSsid", "");
 		host = jd.getString("host", "");
 		proxyType = jd.getString("proxyType", "http");
 		user = jd.getString("user", "");
@@ -293,14 +287,13 @@ public class Profile implements Serializable {
 		if (addrs.length == 0)
 			return "";
 
-		StringBuffer sb = new StringBuffer();
+		StringBuilder sb = new StringBuilder();
 		for (String addr : addrs) {
 			String ta = validateAddr(addr.trim());
 			if (ta != null)
-				sb.append(ta + "|");
+				sb.append(ta).append("|");
 		}
-		String ret = sb.substring(0, sb.length() - 1);
-		return ret;
+		return sb.substring(0, sb.length() - 1);
 	}
 
 	/**
@@ -318,35 +311,6 @@ public class Profile implements Serializable {
 		this.name = name;
 	}
 
-	/**
-	 * @return the ssid
-	 */
-	public String getSsid() {
-		return ssid;
-	}
-
-	/**
-	 * @return the excluded ssid
-	 */
-	public String getExcludedSsid() {
-		return excludedSsid;
-	}
-
-	/**
-	 * @param ssid
-	 *            the ssid to set
-	 */
-	public void setSsid(String ssid) {
-		this.ssid = ssid;
-	}
-
-	/**
-	 * @param ssid
-	 *            the excluded ssid to set
-	 */
-	public void setExcludedSsid(String ssid) {
-		this.excludedSsid = ssid;
-	}
 
 	/**
 	 * @return the host
@@ -544,21 +508,6 @@ public class Profile implements Serializable {
 	}
 
 	/**
-	 * @return the isDNSProxy
-	 */
-	public boolean isDNSProxy() {
-		return isDNSProxy;
-	}
-
-	/**
-	 * @param isDNSProxy
-	 *            the isDNSProxy to set
-	 */
-	public void setDNSProxy(boolean isDNSProxy) {
-		this.isDNSProxy = isDNSProxy;
-	}
-
-	/**
 	 * @return the isPAC
 	 */
 	public boolean isPAC() {
@@ -566,11 +515,165 @@ public class Profile implements Serializable {
 	}
 
 	/**
-	 * @param isDNSProxy
+	 * @param isPAC
 	 *            the isDNSProxy to set
 	 */
 	public void setPAC(boolean isPAC) {
 		this.isPAC = isPAC;
+	}
+
+	static class ProfileUtils {
+		private static final String TAG = "ProfileUtils";
+
+		public static void renameProfile(String profile, String name, Context context) {
+			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+
+			if (name == null) return;
+			name = name.replace("|", "");
+
+			Editor ed = settings.edit();
+			ed.putString("profile" + profile, name);
+			ed.commit();
+
+			String[] profileEntries = settings.getString("profileEntries", "").split("\\|");
+			String[] profileValues = settings.getString("profileValues", "").split("\\|");
+
+			StringBuilder profileEntriesBuffer = new StringBuilder();
+			StringBuilder profileValuesBuffer = new StringBuilder();
+
+			for (int i = 0; i < profileValues.length - 1; i++) {
+				if (profileValues[i].equals(profile)) {
+					profileEntriesBuffer.append(getProfileName(profile, context)).append("|");
+				} else {
+					profileEntriesBuffer.append(profileEntries[i]).append("|");
+				}
+				profileValuesBuffer.append(profileValues[i]).append("|");
+			}
+
+			profileEntriesBuffer.append(context.getString(R.string.profile_new));
+			profileValuesBuffer.append("0");
+
+			ed = settings.edit();
+			ed.putString("profileEntries", profileEntriesBuffer.toString());
+			ed.putString("profileValues", profileValuesBuffer.toString());
+
+			ed.commit();
+		}
+
+		public static String getProfileName(String profile, Context context) {
+			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+			return settings.getString("profile" + profile,
+					context.getString(R.string.profile_base) + " " + profile);
+		}
+
+		public static void delProfile(String profile, Context context) {
+			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+
+			String[] profileEntries = settings.getString("profileEntries", "").split("\\|");
+			String[] profileValues = settings.getString("profileValues", "").split("\\|");
+
+			Log.d(TAG, "Profile :" + profile);
+			if (profileEntries.length > 2) {
+				StringBuilder profileEntriesBuffer = new StringBuilder();
+				StringBuilder profileValuesBuffer = new StringBuilder();
+
+				String newProfileValue = "1";
+
+				for (int i = 0; i < profileValues.length - 1; i++) {
+					if (!profile.equals(profileValues[i])) {
+						profileEntriesBuffer.append(profileEntries[i]).append("|");
+						profileValuesBuffer.append(profileValues[i]).append("|");
+						newProfileValue = profileValues[i];
+					}
+				}
+				profileEntriesBuffer.append(context.getString(R.string.profile_new));
+				profileValuesBuffer.append("0");
+
+				Editor ed = settings.edit();
+				ed.putString("profileEntries", profileEntriesBuffer.toString());
+				ed.putString("profileValues", profileValuesBuffer.toString());
+				ed.putString("profile", newProfileValue);
+				ed.remove(profile);
+				ed.remove("profile" + profile);
+				ed.commit();
+			}
+		}
+
+		public static String[] getProfileEntries(Context context) {
+			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+			String[] profileEntries = settings.getString("profileEntries", "").split("\\|");
+			if (profileEntries.length == 0 || profileEntries[0].isEmpty()) {
+				profileEntries = new String[]{context.getString(R.string.profile_new)};
+			}
+			return profileEntries;
+		}
+
+		public static String[] getProfileValues(Context context) {
+			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+			String[] profileValues = settings.getString("profileValues", "").split("\\|");
+			if (profileValues.length == 0 || profileValues[0].isEmpty()) {
+				profileValues = new String[]{"0"};
+			}
+			return profileValues;
+		}
+
+		public static boolean switchProfile(String oldProfileId, String profileId, Context context) {
+			if(profileId.equals(oldProfileId)) {
+				return true;
+			}
+
+			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+			Editor ed = settings.edit();
+
+			Profile profile = new Profile();
+			profile.getProfile(settings);
+			if(profile.toString().equals(settings.getString(profileId, ""))) {
+				// this function may have been called before by ProxyDroidCLI's logic.
+				// If not, it still doesn't matter because it's the same configuration.
+				return true;
+			}
+			ed.putString(oldProfileId, profile.toString());
+			ed.commit();
+
+			String profileStr = settings.getString(profileId, "");
+			if ("".equals(profileStr)) {
+				profile.init();
+				profile.setName(getProfileName(profileStr, context));
+			} else {
+				profile.decodeJson(profileStr);
+			}
+
+
+			profile.setProfile(settings);
+			ed.commit();
+			return true;
+		}
+
+		public static void addProfile(Context context) {
+			SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
+			Editor ed = settings.edit();
+
+			String[] profileEntries = settings.getString("profileEntries", "").split("\\|");
+			String[] profileValues = settings.getString("profileValues", "").split("\\|");
+			int newProfileValue = Integer.valueOf(profileValues[profileValues.length - 2]) + 1;
+
+			StringBuilder profileEntriesBuffer = new StringBuilder();
+			StringBuilder profileValuesBuffer = new StringBuilder();
+
+			for (int i = 0; i < profileValues.length - 1; i++) {
+				profileEntriesBuffer.append(profileEntries[i]).append("|");
+				profileValuesBuffer.append(profileValues[i]).append("|");
+			}
+			profileEntriesBuffer.append(getProfileName(Integer.toString(newProfileValue), context)).append("|");
+			profileValuesBuffer.append(newProfileValue).append("|");
+			profileEntriesBuffer.append(context.getString(R.string.profile_new));
+			profileValuesBuffer.append("0");
+
+			ed.putString("profileEntries", profileEntriesBuffer.toString());
+			ed.putString("profileValues", profileValuesBuffer.toString());
+			ed.putString("profile", Integer.toString(newProfileValue));
+			ed.commit();
+		}
 	}
 
 }
