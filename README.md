@@ -38,7 +38,7 @@
 ### Proxy Configuration
 - Set a property:
   ```
-  adb shell am broadcast -a org.proxydroid.PROXY_CONFIGURE <property> <value>
+  adb shell am broadcast -a org.proxydroid.PROFILE_CONFIGURE <property> <value>
   ```
 
 - List all properties:
