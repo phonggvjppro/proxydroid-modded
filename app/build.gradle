@@ -2,20 +2,15 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 //apply plugin: 'io.fabric'
 android {
-    compileSdk 34
+    compileSdk 35
     defaultConfig {
         namespace "org.proxydroid"
         applicationId "org.proxydroid"
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode 72
         versionName "1.0.0"
         multiDexEnabled true
-        ndk {
-            // Specifies the ABI configurations of your native
-            // libraries Gradle should build and package with your APK.
-            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
-        }
     }
     buildTypes {
         release {
@@ -27,13 +22,6 @@ android {
     compileOptions {
         sourceCompatibility = 1.8
         targetCompatibility = 1.8
-    }
-
-    externalNativeBuild {
-        cmake {
-            version '3.28.0'
-            path "src/main/cpp/CMakeLists.txt"
-        }
     }
 }
 configurations.all {
