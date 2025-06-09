@@ -44,6 +44,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 
@@ -80,7 +81,7 @@ public class ProxyDroidCLI extends BroadcastReceiver {
 						bundle.putString("certificate", profile.getCertificate());
 
 						bundle.putString("proxyType", profile.getProxyType());
-						bundle.putBoolean("isAutoSetProxy", profile.isGlobalProxy());
+						bundle.putBoolean("isGlobalProxy", profile.isGlobalProxy());
 						bundle.putBoolean("isBypassApps", profile.isBypassApps());
 						bundle.putBoolean("isAuth", profile.isAuth());
 						bundle.putBoolean("isNTLM", profile.isNTLM());
@@ -89,7 +90,11 @@ public class ProxyDroidCLI extends BroadcastReceiver {
 						bundle.putInt("port", profile.getPort());
 
 						it.putExtras(bundle);
-						context.startService(it);
+						if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+							context.startForegroundService(it);
+						} else {
+							context.startService(it);
+						}
 						setResultData("SUCCESS");
 
 					} catch (Exception ignore) {

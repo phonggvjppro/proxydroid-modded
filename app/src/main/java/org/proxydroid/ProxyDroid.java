@@ -557,7 +557,7 @@ public class ProxyDroid extends PreferenceFragmentCompat
         super.onResume();
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(requireActivity());
 
-        if (settings.getBoolean("isAutoSetProxy", false)) {
+        if (settings.getBoolean("isGlobalProxy", false)) {
             proxyedApps.setEnabled(false);
             isBypassAppsCheck.setEnabled(false);
         } else {
