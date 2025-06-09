@@ -438,10 +438,13 @@ public class ProxyDroid extends PreferenceFragmentCompat
             bundle.putBoolean("isPAC", mProfile.isPAC());
 
             bundle.putInt("port", mProfile.getPort());
-
             it.putExtras(bundle);
-            requireActivity().startService(it);
-        } catch (Exception ignore) {
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                requireActivity().startForegroundService(it);
+            } else {
+                requireActivity().startService(it);
+            }
+        } catch (Exception ex) {
             // Nothing
             return false;
         }
@@ -870,10 +873,8 @@ public class ProxyDroid extends PreferenceFragmentCompat
                 + "kill -9 `cat " + filePath + "cntlm.pid`\n");
 
         Utils.runRootCommand(
-                "chmod 700 " + filePath + "/redsocks\n"
+                "chmod 700 " + filePath + "/redsocks2\n"
                 + "chmod 700 " + filePath + "/proxy.sh\n"
-                + "chmod 700 " + filePath + "/gost.sh\n"
-                + "chmod 700 " + filePath + "/cntlm\n"
-                + "chmod 700 " + filePath + "/gost\n");
+                + "chmod 700 " + filePath + "/cntlm\n");
     }
 }

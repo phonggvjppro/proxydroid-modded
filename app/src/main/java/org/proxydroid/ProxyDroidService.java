@@ -44,6 +44,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -173,23 +174,9 @@ public class ProxyDroidService extends Service {
         int proxyPort = port;
 
         try {
-            if ("https".equals(proxyType)) {
-                String src = "-L=http://127.0.0.1:8126";
-                String auth = "";
-                if (!user.isEmpty() && !password.isEmpty()) {
-                    auth = user + ":" + password + "@";
-                }
-                String dst = "-F=https://"  + auth + hostName + ":" + port +"?ip=" + host;
-
-                // Start gost here
-                Utils.runRootCommand(basePath + "gost.sh "  + basePath + " " + src + " " + dst);
-
-                // Reset host / port
-                proxyHost = "127.0.0.1";
-                proxyPort = 8126;
-                proxyType = "http";
+            if(proxyType.equals("https")) {
+                proxyType = "https-connect";
             }
-
             if (proxyType.equals("http") && isAuth && isNTLM) {
                 Utils.runRootCommand(basePath + "proxy.sh " + basePath + " start http 127.0.0.1 8025 false\n"
                         + basePath + "cntlm -P " + basePath + "cntlm.pid -l 8025 -u " + user
@@ -273,11 +260,9 @@ public class ProxyDroidService extends Service {
         String filePath = getFilesDir().getAbsolutePath();
 
         Utils.runRootCommand(
-                "chmod 700 " + filePath + "/redsocks\n"
+                "chmod 700 " + filePath + "/redsocks2\n"
                         + "chmod 700 " + filePath + "/proxy.sh\n"
-                        + "chmod 700 " + filePath + "/gost.sh\n"
-                        + "chmod 700 " + filePath + "/cntlm\n"
-                        + "chmod 700 " + filePath + "/gost\n");
+                        + "chmod 700 " + filePath + "/cntlm\n");
 
         enableProxy();
 
@@ -312,7 +297,12 @@ public class ProxyDroidService extends Service {
         builder.setPriority(NotificationCompat.PRIORITY_LOW);
         builder.setOngoing(true);
 
-        startForeground(1, builder.build());
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(1, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+        } else {
+            startForeground(1, builder.build());
+        }
+
     }
 
     @Override
@@ -376,10 +366,6 @@ public class ProxyDroidService extends Service {
         final StringBuilder sb = new StringBuilder();
 
         sb.append(Utils.getIptables()).append(" -t nat -F OUTPUT\n");
-
-        if ("https".equals(proxyType)) {
-            sb.append("kill -9 `cat " + basePath + "gost.pid`\n");
-        }
 
         if (isAuth && isNTLM) {
             sb.append("kill -9 `cat " + basePath + "cntlm.pid`\n");
