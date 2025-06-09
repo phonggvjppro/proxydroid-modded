@@ -10,154 +10,122 @@ user=$7
 pass=$8
 
 PATH=$DIR:$PATH
-
-case $action in
- start)
-
-echo "
-base {
- log_debug = off;
- log_info = off;
- log = stderr;
- daemon = on;
- redirector = iptables;
-}
-" >$DIR/redsocks.conf
 proxy_port=8123
 
- case $type in
-  http)
-  proxy_port=8124
- case $auth in
-  true)
+write_base_config() {
   echo "
-redsocks {
- local_ip = 127.0.0.1;
- local_port = 8123;
- ip = $host;
- port = $port;
- type = http-relay;
- login = \"$user\";
- password = \"$pass\";
+base {
+  log_debug = off;
+  log_info = off;
+  log = stderr;
+  daemon = on;
+  redirector = iptables;
 }
+" >$DIR/redsocks.conf
+}
+
+write_non_http_config() {
+  if [ "$auth" = "true" ]; then
+    echo "
 redsocks {
- local_ip = 0.0.0.0;
- local_port = 8124;
- ip = $host;
- port = $port;
- type = http-connect;
- login = \"$user\";
- password = \"$pass\";
+  bind = \"0.0.0.0:8123\";
+  relay = \"$host:$port\";
+  type = $type;
+  login = \"$user\";
+  password = \"$pass\";
 }
 " >>$DIR/redsocks.conf
-   ;;
-   false)
-   echo "
-redsocks {
- local_ip = 127.0.0.1;
- local_port = 8123;
- ip = $host;
- port = $port;
- type = http-relay;
-}
-redsocks {
- local_ip = 0.0.0.0;
- local_port = 8124;
- ip = $host;
- port = $port;
- type = http-connect;
-}
- " >>$DIR/redsocks.conf
-   ;;
- esac
-   ;;
-  socks5)
-   case $auth in
-  true)
+  else
     echo "
 redsocks {
- local_ip = 0.0.0.0;
- local_port = 8123;
- ip = $host;
- port = $port;
- type = socks5;
- login = \"$user\";
- password = \"$pass\";
- }
- " >>$DIR/redsocks.conf
-   ;;
- false)
-  echo "
-redsocks {
- local_ip = 0.0.0.0;
- local_port = 8123;
- ip = $host;
- port = $port;
- type = socks5;
- }
- " >>$DIR/redsocks.conf
-   ;;
- esac
- ;;
-   socks4)
-   case $auth in
-  true)
+  bind = \"0.0.0.0:8123\";
+  relay = \"$host:$port\";
+  type = $type;
+}
+" >>$DIR/redsocks.conf
+  fi
+}
+
+write_http_config() {
+  if [ "$auth" = "true" ]; then
     echo "
 redsocks {
- local_ip = 0.0.0.0;
- local_port = 8123;
- ip = $host;
- port = $port;
- type = socks4;
- login = \"$user\";
- password = \"$pass\";
- }
- " >>$DIR/redsocks.conf
-   ;;
- false)
-  echo "
+  bind = \"0.0.0.0:8123\";
+  relay = \"$host:$port\";
+  type = http-relay;
+  login = \"$user\";
+  password = \"$pass\";
+}
 redsocks {
- local_ip = 0.0.0.0;
- local_port = 8123;
- ip = $host;
- port = $port;
- type = socks4;
- }
- " >>$DIR/redsocks.conf
-   ;;
- esac
- ;;
- esac
+  bind = \"0.0.0.0:8124\";
+  relay = \"$host:$port\";
+  type = http-connect;
+  login = \"$user\";
+  password = \"$pass\";
+}
+" >>$DIR/redsocks.conf
+  else
+    echo "
+redsocks {
+  bind = \"0.0.0.0:8123\";
+  relay = \"$host:$port\";
+  type = http-relay;
+}
+redsocks {
+  bind = \"0.0.0.0:8124\";
+  relay = \"$host:$port\";
+  type = http-connect;
+}
+" >>$DIR/redsocks.conf
+  fi
+}
 
- $DIR/redsocks -p $DIR/redsocks.pid -c $DIR/redsocks.conf
- iptables -A INPUT -i ap+ -p tcp --dport 8123 -j ACCEPT
- iptables -A INPUT -i ap+ -p tcp --dport 8124 -j ACCEPT
- iptables -A INPUT -i lo -p tcp --dport 8123 -j ACCEPT
- iptables -A INPUT -i lo -p tcp --dport 8124 -j ACCEPT
- iptables -A INPUT -p tcp --dport 8123 -j DROP
- iptables -A INPUT -p tcp --dport 8124 -j DROP
- iptables -t nat -A PREROUTING -i ap+ -p tcp -d 192.168.43.1/24 -j RETURN
- iptables -t nat -A PREROUTING -i ap+ -p tcp -j REDIRECT --to $proxy_port
- ;;
-stop)
+start_proxy() {
+  write_base_config
+  if [ "$type" = "http" ]; then
+    proxy_port=8124
+    write_http_config
+  else
+    write_non_http_config
+  fi
 
- iptables -t nat -D PREROUTING -i ap+ -p tcp -d 192.168.43.1/24 -j RETURN
- iptables -t nat -D PREROUTING -i ap+ -p tcp -j REDIRECT --to 8123
- iptables -t nat -D PREROUTING -i ap+ -p tcp -j REDIRECT --to 8124
- iptables -D INPUT -i ap+ -p tcp --dport 8123 -j ACCEPT
- iptables -D INPUT -i ap+ -p tcp --dport 8124 -j ACCEPT
- iptables -D INPUT -i lo -p tcp --dport 8123 -j ACCEPT
- iptables -D INPUT -i lo -p tcp --dport 8124 -j ACCEPT
- iptables -D INPUT -p tcp --dport 8123 -j DROP
- iptables -D INPUT -p tcp --dport 8124 -j DROP
+  $DIR/redsocks2 -p $DIR/redsocks.pid -c $DIR/redsocks.conf
+  iptables -A INPUT -i ap+ -p tcp --dport 8123 -j ACCEPT
+  iptables -A INPUT -i ap+ -p tcp --dport 8124 -j ACCEPT
+  iptables -A INPUT -i lo -p tcp --dport 8123 -j ACCEPT
+  iptables -A INPUT -i lo -p tcp --dport 8124 -j ACCEPT
+  iptables -A INPUT -p tcp --dport 8123 -j DROP
+  iptables -A INPUT -p tcp --dport 8124 -j DROP
+  iptables -t nat -A PREROUTING -i ap+ -p tcp -d 192.168.43.1/24 -j RETURN
+  iptables -t nat -A PREROUTING -i ap+ -p tcp -j REDIRECT --to $proxy_port
+}
 
-  killall -9 redsocks
+stop_proxy() {
+  iptables -t nat -D PREROUTING -i ap+ -p tcp -d 192.168.43.1/24 -j RETURN
+  iptables -t nat -D PREROUTING -i ap+ -p tcp -j REDIRECT --to 8123
+  iptables -t nat -D PREROUTING -i ap+ -p tcp -j REDIRECT --to 8124
+  iptables -D INPUT -i ap+ -p tcp --dport 8123 -j ACCEPT
+  iptables -D INPUT -i ap+ -p tcp --dport 8124 -j ACCEPT
+  iptables -D INPUT -i lo -p tcp --dport 8123 -j ACCEPT
+  iptables -D INPUT -i lo -p tcp --dport 8124 -j ACCEPT
+  iptables -D INPUT -p tcp --dport 8123 -j DROP
+  iptables -D INPUT -p tcp --dport 8124 -j DROP
+
+  killall -9 redsocks2
   killall -9 cntlm
-  killall -9 gost
 
-  kill -9 `cat $DIR/redsocks.pid`
+   kill -9 `cat $DIR/redsocks.pid`
 
-  rm $DIR/redsocks.pid
+   rm $DIR/redsocks.pid
 
-  rm $DIR/redsocks.conf
+   rm $DIR/redsocks.conf
+}
+
+case $action in
+start)
+  start_proxy
+  ;;
+stop)
+  stop_proxy
+  ;;
 esac
