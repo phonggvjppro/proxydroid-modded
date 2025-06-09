@@ -2,7 +2,7 @@
 ## Description
 
 - This is a modified version of proxydroid that supports tweaking configuration via command line.
-- Now support from Android 5.0 to Android 14.
+- Now support from Android 5.0 to Android 14 ( tested on Android 15)
 - Here is the link to the original version of proxydroid: [ProxyDroid](https://github.com/madeye/proxydroid)
 
 ## Usage
@@ -44,7 +44,7 @@
 - List all properties:
 
   | Name           | Type           | Description                                                                                             |
-  |----------------|----------------|---------------------------------------------------------------------------------------------------------|
+    |----------------|----------------|---------------------------------------------------------------------------------------------------------|
   | proxyType      | string         | one of: http, https, http-tunnel, socks4, socks5                                                        |
   | host           | string         | Proxy host address                                                                                      |
   | port           | int            | Proxy port number                                                                                       |
@@ -69,4 +69,6 @@
     adb shell am broadcast -a org.proxydroid.TOGGLE_STATE --ez start false
   ```
 
-**_NOTE:_** From Android 8.0, you need to use '-n org.proxydroid/.ProxyDroidCLI' to send broadcast
+> **Note:** 
+> - From Android 8.0, you need to use '-n org.proxydroid/.ProxyDroidCLI' to send broadcast
+> - From Android 12.0, you need to open app before using broadcast to start proxying, due to background execution limits
